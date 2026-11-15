@@ -1,0 +1,14 @@
+[project]
+name = "Webpify"
+version = "1.0.0"
+description = "A lightweight CLI script for batch-converting images to WebP using Pillow or Libwebp (cwebp)."
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "pillow==13.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.5",
+]
