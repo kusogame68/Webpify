@@ -11,3 +11,18 @@ wheels/
 
 # ruff_cache
 .ruff_cache
+
+# C#
+bin/
+obj/
+*.user
+
+# C
+*.exe
+
+# Project output
+output/
+
+# IDE
+.vscode/
+.vs/
