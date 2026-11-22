@@ -2,15 +2,27 @@ import glob
 import io
 import os
 import sys
-from PIL import Image, ImageOps
+import warnings
+from PIL import Image, ImageOps, ImageCms
 
 # SETTING_QUALITY: 0 - 100, depends on the use case (lower = higher compression).
 # SETTING_METHOD: 0 - 6, 6 is maximum compression, but takes more time (~100 ms).
+# MAX_IMAGE_PIXELS: images larger than this are rejected before decoding.
 
 SETTING_QUALITY: int = 10
 SETTING_METHOD: int = 6
 OUTPUT_FOLDER = "output"
+ALLOWED_FORMATS: list[str] = ["JPEG", "PNG", "WEBP"]
+Image.MAX_IMAGE_PIXELS = 25000000
+warnings.simplefilter("error", Image.DecompressionBombWarning)
+SRGB_PROFILE = ImageCms.createProfile("sRGB")
 is_force_convert: bool = input("If source image size is better than after convert, do you still want to convert? (Y/N): ").strip().lower() == "y"
+
+def apply_srgb_profile(im: Image.Image) -> Image.Image:
+    icc: bytes | None = im.info.get("icc_profile")
+    if not icc or im.mode not in ("RGB", "RGBA"):
+        return im
+    return ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(icc)), SRGB_PROFILE)
 
 def pillow_convert() -> None:
     os.makedirs(OUTPUT_FOLDER, exist_ok = True)
@@ -24,8 +36,8 @@ def pillow_convert() -> None:
         buffer: io.BytesIO = io.BytesIO()
 
         try:
-            with Image.open(arg) as im:
-                ImageOps.exif_transpose(im).save(buffer, "WEBP", quality = SETTING_QUALITY, method = SETTING_METHOD)
+            with Image.open(arg, formats = ALLOWED_FORMATS) as im:
+                apply_srgb_profile(ImageOps.exif_transpose(im)).save(buffer, "WEBP", quality = SETTING_QUALITY, method = SETTING_METHOD)
         except Exception as e:
             print(f"Failed: {arg} ({e})")
             continue

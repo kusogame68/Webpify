@@ -11,6 +11,8 @@ A lightweight CLI script collection for batch-converting images to WebP, built f
   - `pillow_convert.py` — pure Python conversion via the Pillow library.
   - `cwebp_convert.py` — invokes Google's official `cwebp` CLI binary via `subprocess`.
 - **Size Guard**: For `.jpg` / `.jpeg` / `.webp` sources, the WebP file is only written if it is actually smaller than the original (can be overridden at startup).
+- **Input Safety**: Only JPEG / PNG / WebP are accepted (detected by file content, not extension), and images larger than `MAX_IMAGE_PIXELS` are rejected before decoding.
+- **Metadata Removal**: EXIF / XMP / ICC metadata are not written to the output. `pillow_convert.py` converts colors to sRGB first so they still display correctly; `cwebp_convert.py` does not.
 
 ---
 
@@ -101,6 +103,7 @@ Encoding settings are defined as constants at the top of each script:
 | --- | --- | --- | --- |
 | `SETTING_QUALITY` | 0 – 100 | `10` | Lower = smaller file, lower quality. Adjust per use case. |
 | `SETTING_METHOD` | 0 – 6 | `6` | Compression effort, 6 gives the best compression but is slower. |
+| `MAX_IMAGE_PIXELS` | — | `25,000,000` | Maximum pixels per image. Larger images are rejected. |
 
 ---
 
@@ -111,6 +114,12 @@ argv (paths / wildcard patterns)
   |
   v
 expand patterns with glob
+  |
+  v
+check format and pixel limit (header only)
+  |
+  v
+auto-orient, convert to sRGB (pillow_convert.py only)
   |
   v
 encode each image to WebP in memory

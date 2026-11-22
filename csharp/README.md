@@ -10,6 +10,8 @@ The C# implementation of Webpify. Batch-converts images to WebP with **Magick.NE
 - **Parallel Processing**: Images are converted in parallel with `Parallel.ForEach`.
 - **EXIF Orientation**: Images are auto-rotated based on their EXIF orientation before encoding.
 - **Size Guard**: For `.jpg` / `.jpeg` / `.webp` sources, the WebP file is only written if it is actually smaller than the original (can be overridden at startup).
+- **Input Safety**: Only JPEG / PNG / WebP are accepted, and images larger than `MaxImagePixels` are rejected before decoding.
+- **Metadata Removal**: EXIF / XMP / ICC metadata are removed, and colors are converted to sRGB first so they still display correctly.
 
 ---
 
@@ -25,7 +27,7 @@ The C# implementation of Webpify. Batch-converts images to WebP with **Magick.NE
 | Library | Reason not chosen |
 | --- | --- |
 | SixLabors.ImageSharp | Requires a Six Labors license key (v4.0.0). |
-| SkiaSharp | Dev fast, but the WebP `method` cannot be adjusted. |
+| SkiaSharp | Fast, but the WebP `method` cannot be adjusted. |
 
 Magick.NET is not as fast as the two above, but it offers better control over encoding settings.
 
@@ -94,6 +96,7 @@ Encoding settings are defined as constants at the top of `Program.cs`:
 | --- | --- | --- | --- |
 | `SettingQuality` | 0 – 100 | `10` | Lower = smaller file, lower quality. Adjust per use case. |
 | `SettingMethod` | 0 – 6 | `6` | Compression effort, 6 gives the best compression but is slower. |
+| `MaxImagePixels` | — | `25,000,000` | Maximum pixels per image. Larger images are rejected. |
 
 ---
 
@@ -104,6 +107,12 @@ args (paths / wildcard patterns)
   |
   v
 expand patterns with Directory.GetFiles
+  |
+  v
+check format and pixel limit (header only)
+  |
+  v
+auto-orient, convert to sRGB, strip metadata
   |
   v
 encode each image to WebP in memory (in parallel)
